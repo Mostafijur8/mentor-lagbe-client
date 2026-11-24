@@ -1,3 +1,6 @@
-export default function Page() {
-  return <main className="page-placeholder"><p>Show the status when a subscription payment is cancelled.</p></main>;
+import { PaymentStatus } from "@/components/payment-status";
+
+// This route explains that checkout was cancelled without changing a user’s plan.
+export default function PaymentCancelPage() {
+  return <PaymentStatus success={false} />;
 }
