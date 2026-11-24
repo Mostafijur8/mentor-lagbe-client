@@ -1,3 +1,6 @@
-export default function Page() {
-  return <main className="page-placeholder"><p>Provide the tutor tuition posting form.</p></main>;
+import { TuitionForm } from "@/components/forms/tuition-form";
+
+// This route provides the complete validated tutor listing form and image upload entry point.
+export default function PostTuitionPage() {
+  return <TuitionForm />;
 }
