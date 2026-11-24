@@ -1,16 +1,32 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useSyncExternalStore } from "react";
 import { DashboardCards, DashboardPageHeading, StatusBadge } from "@/components/dashboard";
 import { useAuth } from "@/components/providers/auth-provider";
 import { demoApplications, demoTuitions } from "@/lib/mock-data";
-import { readClientStore } from "@/lib/client-store";
+import { getClientStoreSnapshot, subscribeClientStore } from "@/lib/client-store";
+import { getAllTuitionsSnapshot, subscribeTuitions } from "@/lib/tuition-store";
+import type { Tuition, TuitionApplication } from "@/types";
+
+const applicationsKey = "mentorlagbe-demo-applications";
 
 // The tutor overview summarizes posted listings, approval status, and incoming learners.
 export default function TutorDashboardPage() {
   const { user } = useAuth();
-  const myTuitions = demoTuitions.filter((item) => item.tutorEmail === user?.email);
-  const applicants = readClientStore("mentorlagbe-demo-applications", demoApplications).filter((item) => item.tutorEmail === user?.email);
+  const tuitionsJson = useSyncExternalStore(subscribeTuitions, getAllTuitionsSnapshot, () => JSON.stringify(demoTuitions));
+  const applicationsJson = useSyncExternalStore(
+    (callback) => subscribeClientStore(applicationsKey, callback),
+    () => getClientStoreSnapshot(applicationsKey, demoApplications),
+    () => JSON.stringify(demoApplications),
+  );
+  const tuitions = useMemo(() => JSON.parse(tuitionsJson) as Tuition[], [tuitionsJson]);
+  const applications = useMemo(
+    () => JSON.parse(applicationsJson) as TuitionApplication[],
+    [applicationsJson],
+  );
+  const myTuitions = tuitions.filter((item) => item.tutorEmail === user?.email);
+  const applicants = applications.filter((item) => item.tutorEmail === user?.email);
   const active = myTuitions.filter((item) => item.isActive && item.approvalStatus === "approved").length;
   return <><DashboardPageHeading eyebrow="YOUR MENTOR SPACE" title={`Welcome, ${user?.name.split(" ")[0] ?? "mentor"}.`} description="Your teaching, your community, and the next learner are right here." action={<Link href="/dashboard/tutor/post-tuition" className="button">+ Post a tuition</Link>} />
     <DashboardCards items={[["Tuitions posted", String(myTuitions.length).padStart(2,"0"), user?.plan === "pro" ? "Unlimited with Pro" : "2 listing free limit"],["Approved & active", String(active).padStart(2,"0"), "Visible to students"],["Applicants received", String(applicants.length).padStart(2,"0"), "Learners are interested"],["Current plan", user?.plan === "pro" ? "Pro" : "Free", user?.plan === "pro" ? "Keep growing" : "Explore unlimited posts"]]} />

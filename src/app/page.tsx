@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { FeaturedTuitions } from "@/components/featured-tuitions";
+import { PricingPlans } from "@/components/pricing-plans";
 
 // The landing page introduces the service and guides visitors toward tutors or teaching.
 export default function HomePage() {
@@ -14,6 +15,8 @@ export default function HomePage() {
     <section className="section container" id="how-it-works"><div className="section-heading"><div><div className="eyebrow">THE RIGHT FIT, MADE SIMPLE</div><h2>Make your next goal<br /><em>feel within reach.</em></h2></div><p>From the first search to the “I finally get it” moment, MentorLagbe makes learning support easier to find.</p></div><div className="steps-grid">{[["01","Tell us what you need","Choose a subject, level, and learning style that works for you."],["02","Meet your match","Explore thoughtful profiles from tutors who care about your progress."],["03","Grow with confidence","Apply, connect, and make your next goal feel possible."]].map(([number,title,body])=><article className="step-card" key={number}><span className="step-number">{number}</span><h3>{title}</h3><p>{body}</p><span className="step-arrow">↗</span></article>)}</div></section>
 
     <section className="featured-section section"><div className="container"><div className="section-heading"><div><div className="eyebrow">A FEW GOOD PLACES TO START</div><h2>Meet your next<br /><em>favorite teacher.</em></h2></div><Link href="/tuitions" className="button button-outline">Explore all tuitions <span>↗</span></Link></div><FeaturedTuitions /></div></section>
+
+    <section className="home-pricing section" id="plans"><div className="container"><div className="section-heading"><div><div className="eyebrow">PLANS THAT GROW WITH YOU</div><h2>Start free.<br /><em>Grow at your pace.</em></h2></div><p>Explore every approved tuition on the Free plan, then choose Pro when you need more room.</p></div></div><PricingPlans /></section>
 
     <section className="section container subject-section"><div className="eyebrow">YOUR CURIOSITY, YOUR CALL</div><div className="section-heading"><h2>What are you<br /><em>in the mood to learn?</em></h2><Link href="/tuitions" className="text-link">All subjects ↗</Link></div><div className="subject-pills">{[["∑","Mathematics"],["◉","Physics"],["⌘","Programming"],["文","IELTS"],["Aa","English"],["⚗","Chemistry"]].map(([icon,subject])=><Link href={`/tuitions?subject=${subject}`} key={subject}><span>{icon}</span>{subject}<b>↗</b></Link>)}</div></section>
 

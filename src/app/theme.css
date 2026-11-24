@@ -1,0 +1,385 @@
+.theme-toggle {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--green);
+  font-size: 17px;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+
+.theme-toggle:hover {
+  background: var(--green-light);
+}
+
+.dash-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.plans-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 860px;
+}
+
+.home-pricing .plans-grid {
+  padding-bottom: 0;
+}
+
+.tuition-reviews .panel-heading {
+  margin-bottom: 13px;
+}
+
+.review-summary {
+  color: var(--ink-soft);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.review-summary span,
+.review-stars {
+  color: #dc9953;
+}
+
+.review-list {
+  display: grid;
+  gap: 12px;
+}
+
+.review-item {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.review-item-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.review-item-heading strong {
+  font-size: 11px;
+}
+
+.review-stars {
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.review-item p {
+  margin: 8px 0;
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.review-item time,
+.review-empty,
+.review-permission {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.review-empty,
+.review-permission {
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.review-permission a {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.review-form {
+  margin-top: 17px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.rating-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rating-fieldset legend,
+.review-form .form-field label {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rating-picker {
+  display: flex;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.rating-picker label {
+  position: relative;
+  color: #dc9953;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.rating-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.rating-picker input:focus-visible + span {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+
+.review-form .form-field {
+  margin: 13px 0;
+}
+
+.review-form .form-field textarea {
+  min-height: 84px;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #edf3ee;
+  --ink-soft: #bac7be;
+  --muted: #91a096;
+  --paper: #111916;
+  --surface: #1a2420;
+  --line: #344239;
+  --green: #78b68d;
+  --green-deep: #173d2d;
+  --green-light: #263b2e;
+  --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+}
+
+html[data-theme="dark"] body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+html[data-theme="dark"] .site-header {
+  background: rgba(17, 25, 22, .94);
+  border-color: rgba(52, 66, 57, .8);
+}
+
+html[data-theme="dark"] .nav-links,
+html[data-theme="dark"] .nav-dashboard,
+html[data-theme="dark"] .nav-signout {
+  color: var(--ink-soft);
+}
+
+html[data-theme="dark"] .hero-section,
+html[data-theme="dark"] .featured-section,
+html[data-theme="dark"] .page-hero,
+html[data-theme="dark"] .payment-page,
+html[data-theme="dark"] .recovery-page {
+  background: #19251f;
+}
+
+html[data-theme="dark"] .hero-bottom {
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .hero-bottom strong {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .art-orbit {
+  border-color: #34463a;
+}
+
+html[data-theme="dark"] .art-panel {
+  border-color: #26352d;
+  background: #23352b;
+}
+
+html[data-theme="dark"] .art-window,
+html[data-theme="dark"] .floating-note,
+html[data-theme="dark"] .step-card,
+html[data-theme="dark"] .tuition-card,
+html[data-theme="dark"] .subject-pills a,
+html[data-theme="dark"] .quote-card,
+html[data-theme="dark"] .site-footer,
+html[data-theme="dark"] .filter-bar,
+html[data-theme="dark"] .dashboard-panel,
+html[data-theme="dark"] .apply-card,
+html[data-theme="dark"] .detail-fee,
+html[data-theme="dark"] .plan-card:not(.plan-featured),
+html[data-theme="dark"] .auth-page,
+html[data-theme="dark"] .auth-form-wrap,
+html[data-theme="dark"] .dashboard-sidebar,
+html[data-theme="dark"] .dash-top,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .toast-message,
+html[data-theme="dark"] .confirm-dialog,
+html[data-theme="dark"] .dashboard-form,
+html[data-theme="dark"] .saved-tuition,
+html[data-theme="dark"] .empty-results,
+html[data-theme="dark"] .payment-card,
+html[data-theme="dark"] .role-switch,
+html[data-theme="dark"] .pagination button {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+html[data-theme="dark"] .auth-art,
+html[data-theme="dark"] .mentor-side-card,
+html[data-theme="dark"] .student-tip,
+html[data-theme="dark"] .detail-note,
+html[data-theme="dark"] .form-note,
+html[data-theme="dark"] .image-dropzone {
+  background: #223129;
+}
+
+html[data-theme="dark"] .dashboard-layout {
+  background: var(--paper);
+}
+
+html[data-theme="dark"] .mode-chip,
+html[data-theme="dark"] .user-role-badge,
+html[data-theme="dark"] .avatar,
+html[data-theme="dark"] .status-pill,
+html[data-theme="dark"] .status-badge,
+html[data-theme="dark"] .account-role,
+html[data-theme="dark"] .account-plan,
+html[data-theme="dark"] .form-section-heading > span {
+  background: #263b2e;
+  color: #a8d1b3;
+}
+
+html[data-theme="dark"] .status-badge.pending,
+html[data-theme="dark"] .status-badge.needs-review {
+  background: #473a25;
+  color: #e5c27b;
+}
+
+html[data-theme="dark"] .status-badge.rejected,
+html[data-theme="dark"] .status-badge.closed {
+  background: #482a2a;
+  color: #e6a3a3;
+}
+
+html[data-theme="dark"] .status-badge.accepted,
+html[data-theme="dark"] .status-badge.approved,
+html[data-theme="dark"] .status-badge.paid {
+  background: #263d2d;
+  color: #a9d8b2;
+}
+
+html[data-theme="dark"] .form-field input,
+html[data-theme="dark"] .form-field textarea,
+html[data-theme="dark"] .form-field select,
+html[data-theme="dark"] .filter-bar select,
+html[data-theme="dark"] .filter-select-label select,
+html[data-theme="dark"] .table-search input,
+html[data-theme="dark"] .role-select,
+html[data-theme="dark"] .search-field input {
+  background: #151e19;
+  color: var(--ink);
+}
+
+html[data-theme="dark"] .nav-links.nav-open {
+  background: #151e19;
+}
+
+html[data-theme="dark"] .button:not(.button-light) {
+  background: #245c45;
+  border-color: #245c45;
+  color: #fff;
+}
+
+html[data-theme="dark"] .brand-mark,
+html[data-theme="dark"] .plan-featured {
+  background: #245c45;
+}
+
+html[data-theme="dark"] .detail-banner {
+  background: linear-gradient(115deg, #263a2e, #38372a);
+}
+
+html[data-theme="dark"] .detail-banner-symbol {
+  background: rgba(20, 35, 27, .45);
+  color: rgba(170, 215, 181, .6);
+}
+
+html[data-theme="dark"] .detail-facts span {
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+html[data-theme="dark"] .dashboard-empty > span,
+html[data-theme="dark"] .step-number {
+  color: #9fc5a3;
+}
+
+html[data-theme="dark"] .sidebar-toggle,
+html[data-theme="dark"] .logout-icon,
+html[data-theme="dark"] .icon-close,
+html[data-theme="dark"] .bookmark-button {
+  background: #202d25;
+  color: var(--ink-soft);
+}
+
+html[data-theme="dark"] .bookmark-button.saved {
+  background: #482d2b;
+  color: #e6a3a3;
+}
+
+html[data-theme="dark"] .image-change {
+  background: #151e19;
+  color: var(--green);
+}
+
+html[data-theme="dark"] .payment-symbol.paid {
+  background: #263d2d;
+  color: #a9d8b2;
+}
+
+html[data-theme="dark"] .payment-symbol.cancelled,
+html[data-theme="dark"] .confirm-icon {
+  background: #473a25;
+  color: #e5c27b;
+}
+
+html[data-theme="dark"] .role-switch button {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .role-switch button.selected {
+  background: #245c45;
+  color: #fff;
+}
+
+html[data-theme="dark"] .pagination button:disabled {
+  color: #66736a;
+}
+
+@media (max-width: 680px) {
+  .home-pricing .section-heading {
+    padding-inline: 17px;
+  }
+
+  .dash-top-actions {
+    gap: 8px;
+  }
+
+  .review-item-heading {
+    align-items: flex-start;
+  }
+
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+}
