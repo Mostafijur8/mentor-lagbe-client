@@ -2,19 +2,19 @@
 
 /* Design tokens keep the visual language consistent across public and dashboard pages. */
 :root {
-  --ink: #0f172a;
-  --ink-soft: #475569;
-  --muted: #718096;
-  --paper: #f6f8fc;
+  --ink: #15251f;
+  --ink-soft: #52645d;
+  --muted: #82918a;
+  --paper: #f8f9f5;
   --surface: #ffffff;
-  --line: #e2e8f0;
-  --green: #2563eb;
-  --green-deep: #1e3a8a;
-  --green-light: #eff6ff;
-  --lime: #dbeafe;
-  --orange: #f59e0b;
-  --red: #dc2626;
-  --shadow: 0 18px 55px rgba(15, 23, 42, .08);
+  --line: #e4e9e2;
+  --green: #245c45;
+  --green-deep: #153d2d;
+  --green-light: #e8f1e9;
+  --lime: #d5ef8e;
+  --orange: #f3a36b;
+  --red: #b64747;
+  --shadow: 0 18px 55px rgba(32, 57, 43, .08);
   --radius: 18px;
 }
 
