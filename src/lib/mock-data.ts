@@ -25,7 +25,12 @@ export const demoApplications: TuitionApplication[] = [
 
 export const demoUsers: UserProfile[] = [
   { name: "Nafisa Rahman", email: "nafisa@example.com", role: "tutor", plan: "pro" },
+  { name: "Arif Hasan", email: "arif@example.com", role: "tutor", plan: "free" },
+  { name: "Samia Kabir", email: "samia@example.com", role: "tutor", plan: "free" },
+  { name: "Tanvir Ahmed", email: "tanvir@example.com", role: "tutor", plan: "pro" },
   { name: "Ayesha Rahman", email: "ayesha@example.com", role: "student", plan: "free" },
+  { name: "Rafi Ahmed", email: "rafi@example.com", role: "student", plan: "pro" },
+  { name: "Nabila Sultana", email: "nabila@example.com", role: "student", plan: "free" },
   { name: "MentorLagbe Admin", email: "admin@mentorlagbe.com", role: "admin", plan: "pro" },
 ];
 
