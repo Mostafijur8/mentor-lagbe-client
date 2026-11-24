@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { ApplicationForm } from "@/components/forms/application-form";
-import { getAllTuitions } from "@/lib/tuition-store";
+import { getAllTuitionsSnapshot, subscribeTuitions } from "@/lib/tuition-store";
 import type { Tuition } from "@/types";
 
 // This client detail view can display both seed listings and newly created local listings.
 export function TuitionDetail() {
   const { id } = useParams<{ id: string }>();
-  const [tuition, setTuition] = useState<Tuition | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => { setTuition(getAllTuitions().find((item) => item._id === id && item.approvalStatus === "approved" && item.isActive) ?? null); setLoaded(true); }, [id]);
-  if (!loaded) return <main className="detail-page container"><div className="detail-skeleton"/></main>;
+  const tuitionsJson = useSyncExternalStore(subscribeTuitions, getAllTuitionsSnapshot, () => "__loading__");
+  const tuitions = useMemo(() => tuitionsJson === "__loading__" ? [] : JSON.parse(tuitionsJson) as Tuition[], [tuitionsJson]);
+  const tuition = tuitions.find((item) => item._id === id && item.approvalStatus === "approved" && item.isActive) ?? null;
+  if (tuitionsJson === "__loading__") return <main className="detail-page container"><div className="detail-skeleton"/></main>;
   if (!tuition) return <main className="container detail-missing"><span>⌕</span><h1>This tuition isn’t available</h1><p>It may have closed or still be waiting for review.</p><Link href="/tuitions" className="button">Browse other tuitions</Link></main>;
   const initials = tuition.tutorName.split(" ").map((part) => part[0]).slice(0, 2).join("");
   return <main className="container detail-page"><Link href="/tuitions" className="back-link">← Browse tuitions</Link>

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { TuitionCard } from "@/components/tuition-card";
 import { demoTuitions } from "@/lib/mock-data";
-import { getAllTuitions } from "@/lib/tuition-store";
+import { getAllTuitionsSnapshot, subscribeTuitions } from "@/lib/tuition-store";
 
 const pageSize = 6;
 
@@ -14,8 +14,8 @@ export function TuitionBrowser({ initialSubject = "" }: { initialSubject?: strin
   const [classLevel, setClassLevel] = useState("Any level");
   const [mode, setMode] = useState("Any mode");
   const [page, setPage] = useState(1);
-  const [tuitions, setTuitions] = useState(demoTuitions);
-  useEffect(() => setTuitions(getAllTuitions()), []);
+  const tuitionsJson = useSyncExternalStore(subscribeTuitions, getAllTuitionsSnapshot, () => JSON.stringify(demoTuitions));
+  const tuitions = useMemo(() => JSON.parse(tuitionsJson) as typeof demoTuitions, [tuitionsJson]);
   const subjects = [...new Set(tuitions.map((item) => item.subject))].sort();
   const levels = [...new Set(tuitions.map((item) => item.classLevel))].sort();
   const results = useMemo(() => tuitions.filter((item) => {

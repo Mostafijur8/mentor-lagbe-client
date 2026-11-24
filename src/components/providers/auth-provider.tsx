@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useSyncExternalStore, type ReactNode } from "react";
 import { demoUsers } from "@/lib/mock-data";
+import { removeClientStore, subscribeClientStore, writeClientStore } from "@/lib/client-store";
 import type { Role, UserProfile } from "@/types";
 
 type AuthContextValue = {
@@ -17,24 +18,18 @@ const STORAGE_KEY = "mentorlagbe-demo-user";
 
 // This client-only session keeps all interface flows usable until the backend is connected.
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setUser(JSON.parse(saved) as UserProfile);
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      setReady(true);
-    }
-  }, []);
+  const raw = useSyncExternalStore(
+    (callback) => subscribeClientStore(STORAGE_KEY, callback),
+    () => typeof window === "undefined" ? null : window.localStorage.getItem(STORAGE_KEY),
+    () => "__loading__",
+  );
+  const ready = raw !== "__loading__";
+  let user: UserProfile | null = null;
+  try { if (raw && raw !== "__loading__") user = JSON.parse(raw) as UserProfile; } catch { user = null; }
 
   const save = useCallback((next: UserProfile | null) => {
-    setUser(next);
-    if (next) localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    else localStorage.removeItem(STORAGE_KEY);
+    if (next) writeClientStore(STORAGE_KEY, next);
+    else removeClientStore(STORAGE_KEY);
   }, []);
 
   const signIn = useCallback((email: string, role: Role = "student") => {
@@ -47,13 +42,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback((profile: UserProfile) => { save(profile); return profile; }, [save]);
   const signOut = useCallback(() => save(null), [save]);
   const updateProfile = useCallback((updates: Partial<UserProfile>) => {
-    setUser((current) => {
-      if (!current) return current;
-      const next = { ...current, ...updates };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
-  }, []);
+    if (user) save({ ...user, ...updates });
+  }, [save, user]);
 
   return <AuthContext.Provider value={{ user, ready, signIn, signUp, signOut, updateProfile }}>{children}</AuthContext.Provider>;
 }

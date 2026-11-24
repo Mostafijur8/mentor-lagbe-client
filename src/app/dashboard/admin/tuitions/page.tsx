@@ -1,21 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { DashboardPageHeading, EmptyState, StatusBadge } from "@/components/dashboard";
 import { useToast } from "@/components/ui/toast-provider";
 import { demoTuitions } from "@/lib/mock-data";
-import { getAllTuitions, updateTuition } from "@/lib/tuition-store";
+import { getAllTuitionsSnapshot, subscribeTuitions, updateTuition } from "@/lib/tuition-store";
 import type { Tuition } from "@/types";
 
 // Admins can inspect submitted listings and approve or reject them before public display.
 export default function AdminTuitionsPage() {
   const toast = useToast();
-  const [items, setItems] = useState<Tuition[]>(() => getAllTuitions());
+  const itemsJson = useSyncExternalStore(subscribeTuitions, getAllTuitionsSnapshot, () => JSON.stringify(demoTuitions));
+  const items = useMemo(() => JSON.parse(itemsJson) as Tuition[], [itemsJson]);
   const [filter, setFilter] = useState("Needs review");
   const visible = useMemo(() => filter === "All listings" ? items : filter === "Needs review" ? items.filter((item) => item.approvalStatus === "pending") : items.filter((item) => item.approvalStatus === filter.toLowerCase()), [filter, items]);
 
   function decide(tuition: Tuition, approvalStatus: "approved" | "rejected") {
-    updateTuition(tuition._id, { approvalStatus }); setItems(getAllTuitions());
+    updateTuition(tuition._id, { approvalStatus });
     toast(approvalStatus === "approved" ? "Tuition approved and ready for students." : "Tuition returned to the tutor.", approvalStatus === "approved" ? "success" : "info");
   }
 

@@ -1,5 +1,5 @@
 import { demoTuitions } from "@/lib/mock-data";
-import { readClientStore, writeClientStore } from "@/lib/client-store";
+import { readClientStore, subscribeClientStore, writeClientStore } from "@/lib/client-store";
 import type { Tuition } from "@/types";
 
 const customTuitionsKey = "mentorlagbe-demo-custom-tuitions";
@@ -13,6 +13,14 @@ export function getAllTuitions() {
   return [...demoTuitions, ...readClientStore<Tuition[]>(customTuitionsKey, [])]
     .filter((item) => !deleted.includes(item._id))
     .map((item) => ({ ...item, ...updates[item._id] }));
+}
+
+export function subscribeTuitions(callback: () => void) {
+  return subscribeClientStore("*", callback);
+}
+
+export function getAllTuitionsSnapshot() {
+  return JSON.stringify(getAllTuitions());
 }
 
 export function createTuition(tuition: Tuition) {

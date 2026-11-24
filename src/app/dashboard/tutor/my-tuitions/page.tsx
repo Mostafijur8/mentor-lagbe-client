@@ -1,28 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { DashboardPageHeading, EmptyState, StatusBadge } from "@/components/dashboard";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { demoTuitions } from "@/lib/mock-data";
-import { deleteTuition, getAllTuitions, updateTuition } from "@/lib/tuition-store";
+import { deleteTuition, getAllTuitionsSnapshot, subscribeTuitions, updateTuition } from "@/lib/tuition-store";
 import type { Tuition } from "@/types";
 
 // Tutors can search listings, revise details, close active offers, and remove their posts.
 export default function MyTuitionsPage() {
   const { user } = useAuth();
   const toast = useToast();
-  const [all, setAll] = useState<Tuition[]>(demoTuitions);
+  const allJson = useSyncExternalStore(subscribeTuitions, getAllTuitionsSnapshot, () => JSON.stringify(demoTuitions));
+  const all = useMemo(() => JSON.parse(allJson) as Tuition[], [allJson]);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Tuition | null>(null);
   const [deleting, setDeleting] = useState<Tuition | null>(null);
-  useEffect(() => setAll(getAllTuitions()), [user]);
   const mine = all.filter((item) => item.tutorEmail === user?.email);
   const filtered = useMemo(() => mine.filter((item) => `${item.title} ${item.subject}`.toLowerCase().includes(query.toLowerCase())), [mine, query]);
 
   function toggleActive(tuition: Tuition) {
-    const isActive = !tuition.isActive; updateTuition(tuition._id, { isActive }); setAll(getAllTuitions());
+    const isActive = !tuition.isActive; updateTuition(tuition._id, { isActive });
     toast(isActive ? "Your tuition is open again." : "Your tuition is now closed.", "info");
   }
 
@@ -30,12 +30,12 @@ export default function MyTuitionsPage() {
     event.preventDefault(); if (!editing) return;
     const form = new FormData(event.currentTarget);
     updateTuition(editing._id, { title: String(form.get("title")).trim(), location: String(form.get("location")).trim(), monthlyFee: Number(form.get("monthlyFee")), description: String(form.get("description")).trim(), approvalStatus: "pending" });
-    setAll(getAllTuitions()); setEditing(null); toast("Changes saved. This listing is back in review.");
+    setEditing(null); toast("Changes saved. This listing is back in review.");
   }
 
   function confirmDelete() {
     if (!deleting) return;
-    deleteTuition(deleting._id); setAll(getAllTuitions()); setDeleting(null); toast("Tuition listing removed.", "info");
+    deleteTuition(deleting._id); setDeleting(null); toast("Tuition listing removed.", "info");
   }
 
   return <><DashboardPageHeading eyebrow="YOUR TEACHING OFFERS" title="My tuitions" description="Manage the learning plans you’ve shared with the community." action={<Link href="/dashboard/tutor/post-tuition" className="button">+ New tuition</Link>} />

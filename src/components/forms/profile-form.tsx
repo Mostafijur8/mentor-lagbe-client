@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { DashboardPageHeading } from "@/components/dashboard";
@@ -10,15 +10,13 @@ import { DashboardPageHeading } from "@/components/dashboard";
 export function ProfileForm() {
   const { user, updateProfile } = useAuth();
   const toast = useToast();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [bio, setBio] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [name, setName] = useState(user?.name ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [bio, setBio] = useState(user?.bio ?? "");
+  const [imageUrl, setImageUrl] = useState(user?.image ?? "");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState("");
+  const [preview, setPreview] = useState(user?.image ?? "");
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => { if (user) { setName(user.name); setPhone(user.phone ?? ""); setBio(user.bio ?? ""); setImageUrl(user.image ?? ""); setPreview(user.image ?? ""); } }, [user]);
 
   async function chooseImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]; if (!file) return;
