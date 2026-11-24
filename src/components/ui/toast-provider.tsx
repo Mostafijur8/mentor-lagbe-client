@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { ToastMessage } from "@/components/ui/toast";
 
 type ToastKind = "success" | "error" | "info";
 type ToastItem = { id: number; message: string; kind: ToastKind };
@@ -19,7 +20,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return <ToastContext.Provider value={{ toast }}>
     {children}
     <div className="toast-viewport" aria-live="polite" aria-atomic="false">
-      {items.map((item) => <div key={item.id} className={`toast-message ${item.kind}`} role="status">{item.message}</div>)}
+      {items.map((item) => <ToastMessage key={item.id} message={item.message} kind={item.kind} />)}
     </div>
   </ToastContext.Provider>;
 }

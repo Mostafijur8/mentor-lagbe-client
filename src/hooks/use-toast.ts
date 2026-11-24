@@ -1,1 +1,3 @@
-// Purpose: Hook for application success and error notifications.
+"use client";
+
+export { useToast } from "@/components/ui/toast-provider";
