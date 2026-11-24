@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TuitionCard } from "@/components/tuition-card";
 import { demoTuitions } from "@/lib/mock-data";
+import { getAllTuitions } from "@/lib/tuition-store";
 
 const pageSize = 6;
 
@@ -13,15 +14,17 @@ export function TuitionBrowser({ initialSubject = "" }: { initialSubject?: strin
   const [classLevel, setClassLevel] = useState("Any level");
   const [mode, setMode] = useState("Any mode");
   const [page, setPage] = useState(1);
-  const subjects = [...new Set(demoTuitions.map((item) => item.subject))].sort();
-  const levels = [...new Set(demoTuitions.map((item) => item.classLevel))].sort();
-  const results = useMemo(() => demoTuitions.filter((item) => {
+  const [tuitions, setTuitions] = useState(demoTuitions);
+  useEffect(() => setTuitions(getAllTuitions()), []);
+  const subjects = [...new Set(tuitions.map((item) => item.subject))].sort();
+  const levels = [...new Set(tuitions.map((item) => item.classLevel))].sort();
+  const results = useMemo(() => tuitions.filter((item) => {
     const matchesQuery = `${item.title} ${item.subject}`.toLowerCase().includes(query.trim().toLowerCase());
     const matchesSubject = subject === "All subjects" || item.subject === subject;
     const matchesClass = classLevel === "Any level" || item.classLevel === classLevel;
     const matchesMode = mode === "Any mode" || item.mode === mode;
     return item.approvalStatus === "approved" && item.isActive && matchesQuery && matchesSubject && matchesClass && matchesMode;
-  }), [query, subject, classLevel, mode]);
+  }), [tuitions, query, subject, classLevel, mode]);
   const totalPages = Math.max(1, Math.ceil(results.length / pageSize));
   const visible = results.slice((page - 1) * pageSize, page * pageSize);
 
