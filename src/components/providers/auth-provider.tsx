@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { demoUsers } from "@/lib/mock-data";
 import type { Role, UserProfile } from "@/types";
 
 type AuthContextValue = {
@@ -37,7 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback((email: string, role: Role = "student") => {
-    const profile: UserProfile = { name: email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()), email, role, plan: "free" };
+    const existing = demoUsers.find((item) => item.email === email);
+    const profile: UserProfile = existing ? { ...existing, role } : { name: email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()), email, role, plan: "free" };
     save(profile);
     return profile;
   }, [save]);
