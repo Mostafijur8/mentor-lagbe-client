@@ -1,3 +1,27 @@
-export default function Page() {
-  return <main className="page-placeholder"><p>MentorLagbe home page introduces the platform and helps users discover tutors.</p></main>;
+import Link from "next/link";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { TuitionCard } from "@/components/tuition-card";
+import { demoTuitions } from "@/lib/mock-data";
+
+// The landing page introduces the service and guides visitors toward tutors or teaching.
+export default function HomePage() {
+  return <><SiteHeader /><main>
+    <section className="hero-section"><div className="container hero-grid"><div className="hero-copy"><div className="eyebrow"><span className="live-dot" /> A BETTER WAY TO LEARN</div><h1>Find your spark.<br />Meet your <em>mentor.</em></h1><p>Learning feels different when someone believes in your potential. Find a tutor who gets you, at a pace that feels right.</p><div className="hero-actions"><Link className="button" href="/tuitions">Find your mentor <span>↗</span></Link><Link className="quiet-link" href="/sign-up?role=tutor">I want to teach <span>→</span></Link></div><div className="hero-proof"><div className="avatar-stack"><span>NR</span><span>AH</span><span>SK</span><span>+</span></div><span><strong>1,200+</strong> learners found their guide</span><span className="proof-stars">★★★★★ <small>4.9/5</small></span></div></div>
+      <div className="hero-art" aria-label="Illustration of a student learning with a mentor"><div className="art-orbit orbit-one"/><div className="art-orbit orbit-two"/><div className="art-panel"><div className="art-window"><span/><span/><span/></div><div className="art-quote">“Small steps,<br />big possibilities.”<small>— your future mentor</small></div><div className="art-person"><div className="person-hair"/><div className="person-face">☺</div><div className="person-body"/></div><div className="floating-note note-top"><span>✦</span><div><strong>Your potential</strong><small>has no ceiling</small></div></div><div className="floating-note note-bottom"><span className="note-icon">↗</span><div><strong>Goal unlocked</strong><small>One step closer</small></div></div></div></div></div>
+      <div className="container hero-bottom"><span>Trusted by learners from</span><strong>BRAC</strong><strong>NSU</strong><strong>BUET</strong><strong>DU</strong><strong>Independent University</strong></div>
+    </section>
+
+    <section className="section container" id="how-it-works"><div className="section-heading"><div><div className="eyebrow">THE RIGHT FIT, MADE SIMPLE</div><h2>Make your next goal<br /><em>feel within reach.</em></h2></div><p>From the first search to the “I finally get it” moment, MentorLagbe makes learning support easier to find.</p></div><div className="steps-grid">{[["01","Tell us what you need","Choose a subject, level, and learning style that works for you."],["02","Meet your match","Explore thoughtful profiles from tutors who care about your progress."],["03","Grow with confidence","Apply, connect, and make your next goal feel possible."]].map(([number,title,body])=><article className="step-card" key={number}><span className="step-number">{number}</span><h3>{title}</h3><p>{body}</p><span className="step-arrow">↗</span></article>)}</div></section>
+
+    <section className="featured-section section"><div className="container"><div className="section-heading"><div><div className="eyebrow">A FEW GOOD PLACES TO START</div><h2>Meet your next<br /><em>favorite teacher.</em></h2></div><Link href="/tuitions" className="button button-outline">Explore all tuitions <span>↗</span></Link></div><div className="tuition-grid">{demoTuitions.slice(0,3).map((tuition)=><TuitionCard key={tuition._id} tuition={tuition}/>)}</div></div></section>
+
+    <section className="section container subject-section"><div className="eyebrow">YOUR CURIOSITY, YOUR CALL</div><div className="section-heading"><h2>What are you<br /><em>in the mood to learn?</em></h2><Link href="/tuitions" className="text-link">All subjects ↗</Link></div><div className="subject-pills">{[["∑","Mathematics"],["◉","Physics"],["⌘","Programming"],["文","IELTS"],["Aa","English"],["⚗","Chemistry"]].map(([icon,subject])=><Link href={`/tuitions?subject=${subject}`} key={subject}><span>{icon}</span>{subject}<b>↗</b></Link>)}</div></section>
+
+    <section className="stats-band"><div className="container stats-band-inner"><div><strong>1.2k+</strong><span>learners supported</span></div><div><strong>380+</strong><span>verified mentors</span></div><div><strong>22</strong><span>subjects to explore</span></div><div><strong>4.9/5</strong><span>learner satisfaction</span></div></div></section>
+
+    <section className="section container quote-section"><div className="eyebrow">KIND WORDS, REAL GROWTH</div><div className="quote-card"><span className="quote-mark">“</span><blockquote>My daughter used to avoid math. Her tutor made it feel like a puzzle she could actually solve. Now she looks forward to every session.</blockquote><div className="quote-person"><span className="avatar">FR</span><span><strong>Farzana Rahman</strong><small>Parent · Dhaka</small></span><span className="proof-stars">★★★★★</span></div></div></section>
+
+    <section className="cta-band"><div className="container cta-inner"><div><div className="eyebrow">YOUR KNOWLEDGE CAN CHANGE A LIFE</div><h2>Good at something?<br /><em>Pass it on.</em></h2><p>Meet learners who are ready for what you know.</p></div><Link className="button button-light" href="/sign-up?role=tutor">Become a mentor <span>↗</span></Link><span className="cta-spark">✳</span></div></section>
+  </main><SiteFooter /></>;
 }
