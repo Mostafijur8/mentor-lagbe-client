@@ -52,6 +52,7 @@ No payment or authentication secrets are stored in the frontend.
 ## Packages
 
 - Runtime: `next`, `react`, `react-dom`
+- UI and motion: `lucide-react`, `motion`
 - Styling and build: `tailwindcss`, `@tailwindcss/turbopack`, `babel-plugin-react-compiler`
 - Development and checks: `typescript`, `eslint`, `eslint-config-next`, `@types/node`, `@types/react`, `@types/react-dom`
 

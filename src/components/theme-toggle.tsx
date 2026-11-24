@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import { Moon, Sun } from "lucide-react";
 import { readClientStore, subscribeClientStore, writeClientStore } from "@/lib/client-store";
 
 type Theme = "light" | "dark";
@@ -34,7 +35,7 @@ export function ThemeToggle() {
       title={`Switch to ${nextTheme} theme`}
       onClick={toggleTheme}
     >
-      <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
+      {theme === "dark" ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
     </button>
   );
 }

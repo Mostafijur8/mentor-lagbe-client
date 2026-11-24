@@ -4,6 +4,7 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 import "./theme.css";
+import "./premium.css";
 
 export const metadata: Metadata = {
   title: "MentorLagbe | Find your learning mentor",

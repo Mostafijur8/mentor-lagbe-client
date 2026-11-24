@@ -3,15 +3,30 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import {
+  Bookmark,
+  ClipboardList,
+  CreditCard,
+  House,
+  LayoutDashboard,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  Sparkles,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/components/ui/toast-provider";
 import type { Role } from "@/types";
 
-const dashboardNav: Record<Role, [string, string, string][]> = {
-  student: [["Overview", "/dashboard/student", "⌂"], ["My applications", "/dashboard/student/my-applications", "▤"], ["Saved tuitions", "/dashboard/student/saved-tuitions", "♡"]],
-  tutor: [["Overview", "/dashboard/tutor", "⌂"], ["Post a tuition", "/dashboard/tutor/post-tuition", "+"], ["My tuitions", "/dashboard/tutor/my-tuitions", "▤"], ["Applicants", "/dashboard/tutor/applicants", "♙"]],
-  admin: [["Overview", "/dashboard/admin", "⌂"], ["Users", "/dashboard/admin/users", "♙"], ["Tuition review", "/dashboard/admin/tuitions", "▤"], ["Transactions", "/dashboard/admin/transactions", "$"]],
+const dashboardNav: Record<Role, [string, string, LucideIcon][]> = {
+  student: [["Overview", "/dashboard/student", House], ["My applications", "/dashboard/student/my-applications", ClipboardList], ["Saved tuitions", "/dashboard/student/saved-tuitions", Bookmark]],
+  tutor: [["Overview", "/dashboard/tutor", House], ["Post a tuition", "/dashboard/tutor/post-tuition", Plus], ["My tuitions", "/dashboard/tutor/my-tuitions", ClipboardList], ["Applicants", "/dashboard/tutor/applicants", Users]],
+  admin: [["Overview", "/dashboard/admin", LayoutDashboard], ["Users", "/dashboard/admin/users", Users], ["Tuition review", "/dashboard/admin/tuitions", ClipboardList], ["Transactions", "/dashboard/admin/transactions", CreditCard]],
 };
 
 // This shell keeps dashboard navigation consistent and protects private demo routes.
@@ -39,9 +54,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     signOut(); toast("You have been signed out.", "info"); router.push("/");
   }
 
-  return <div className={`dashboard-layout ${collapsed ? "dashboard-collapsed" : ""}`}><aside className="dashboard-sidebar"><Link href="/" className="brand"><span className="brand-mark">m</span><span>mentor<span className="brand-accent">lagbe</span><small>LEARNING SPACE</small></span></Link><span className="sidebar-label">WORKSPACE</span>{nav.map(([label, href, icon]) => <Link key={href} href={href} className={`side-link ${pathname === href ? "active" : ""}`}><span className="side-icon">{icon}</span><span>{label}</span></Link>)}<span className="sidebar-label">ACCOUNT</span><Link className={`side-link ${pathname === "/dashboard/profile" ? "active" : ""}`} href="/dashboard/profile"><span className="side-icon">♙</span><span>My profile</span></Link><Link className="side-link" href="/pricing"><span className="side-icon">✦</span><span>{user.plan === "pro" ? "Manage Pro" : "Explore Pro"}</span></Link><div className="sidebar-user"><span className="avatar">{user.name.slice(0,2).toUpperCase()}</span><span className="sidebar-user-meta"><strong>{user.name}</strong><small>{user.role} · {user.plan}</small></span><button className="logout-icon" aria-label="Sign out" onClick={logout}>↗</button></div></aside>
-    <main className="dashboard-main"><header className="dash-top"><div className="dash-breadcrumb"><button className="sidebar-toggle" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={() => setCollapsed((value) => !value)}>{collapsed ? "☰" : "⇤"}</button><span>Learning space <span>/</span> {activeTitle}</span></div><div className="dash-top-actions"><ThemeToggle /><Link href="/dashboard/profile" className="dash-profile"><span className="avatar">{user.name.slice(0,2).toUpperCase()}</span><span><strong>{user.name}</strong><small>{user.role}</small></span></Link></div></header><div className="dash-content">{children}</div></main>
-    <nav className="mobile-dash-nav" aria-label="Dashboard navigation">{nav.slice(0,4).map(([label,href,icon])=><Link key={href} href={href} className={pathname === href ? "active" : ""}><span>{icon}</span><small>{label}</small></Link>)}<Link href="/dashboard/profile" className={pathname === "/dashboard/profile" ? "active" : ""}><span>♙</span><small>Profile</small></Link></nav>
+  return <div className={`dashboard-layout ${collapsed ? "dashboard-collapsed" : ""}`}><aside className="dashboard-sidebar"><Link href="/" className="brand"><span className="brand-mark">m</span><span>mentor<span className="brand-accent">lagbe</span><small>LEARNING SPACE</small></span></Link><span className="sidebar-label">WORKSPACE</span>{nav.map(([label, href, Icon]) => <Link key={href} href={href} className={`side-link ${pathname === href ? "active" : ""}`}><span className="side-icon"><Icon size={16} aria-hidden="true"/></span><span>{label}</span></Link>)}<span className="sidebar-label">ACCOUNT</span><Link className={`side-link ${pathname === "/dashboard/profile" ? "active" : ""}`} href="/dashboard/profile"><span className="side-icon"><UserRound size={16} aria-hidden="true"/></span><span>My profile</span></Link><Link className="side-link" href="/pricing"><span className="side-icon"><Sparkles size={16} aria-hidden="true"/></span><span>{user.plan === "pro" ? "Manage Pro" : "Explore Pro"}</span></Link><div className="sidebar-user"><span className="avatar">{user.name.slice(0,2).toUpperCase()}</span><span className="sidebar-user-meta"><strong>{user.name}</strong><small>{user.role} · {user.plan}</small></span><button className="logout-icon" aria-label="Sign out" onClick={logout}><LogOut size={15} aria-hidden="true"/></button></div></aside>
+    <main className="dashboard-main"><header className="dash-top"><div className="dash-breadcrumb"><button className="sidebar-toggle" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={() => setCollapsed((value) => !value)}>{collapsed ? <PanelLeftOpen size={16}/> : <PanelLeftClose size={16}/>}</button><span>Learning space <span>/</span> {activeTitle}</span></div><div className="dash-top-actions"><ThemeToggle /><Link href="/dashboard/profile" className="dash-profile"><span className="avatar">{user.name.slice(0,2).toUpperCase()}</span><span><strong>{user.name}</strong><small>{user.role}</small></span></Link></div></header><div className="dash-content">{children}</div></main>
+    <nav className="mobile-dash-nav" aria-label="Dashboard navigation">{nav.slice(0,4).map(([label,href,Icon])=><Link key={href} href={href} className={pathname === href ? "active" : ""}><span><Icon size={16} aria-hidden="true"/></span><small>{label}</small></Link>)}<Link href="/dashboard/profile" className={pathname === "/dashboard/profile" ? "active" : ""}><span><UserRound size={16} aria-hidden="true"/></span><small>Profile</small></Link></nav>
   </div>;
 }
 
