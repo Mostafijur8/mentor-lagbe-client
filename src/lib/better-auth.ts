@@ -15,6 +15,11 @@ export const auth = betterAuth({
   }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://mentor-lagbe-client-rose.vercel.app",
+    "https://mentor-lagbe-client-mostafijur846661-3575.vercel.app",
+  ],
   emailAndPassword: {
     enabled: true,
   },

@@ -60,7 +60,6 @@ async function requestAccessToken() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [syncing, setSyncing] = useState(false);
   const { data: session, isPending } = authClient.useSession();
   const sessionUserId = session?.user?.id ?? null;
 
@@ -80,11 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!sessionUserId) {
       setAccessToken(null);
       setUser(null);
-      setSyncing(false);
       return () => { active = false; };
     }
 
-    setSyncing(true);
     setAuthError(null);
     requestAccessToken()
       .then((profile) => {
@@ -95,9 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccessToken(null);
         setUser(null);
         setAuthError(getErrorMessage(error));
-      })
-      .finally(() => {
-        if (active) setSyncing(false);
       });
 
     return () => { active = false; };
@@ -111,7 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthError(message);
       throw new Error(message);
     }
-    return requestAccessToken();
+    const profile = await requestAccessToken();
+    setUser(profile);
+    return profile;
   }, []);
 
   const signUp = useCallback(async (profile: UserProfile, password: string) => {
@@ -127,7 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthError(message);
       throw new Error(message);
     }
-    return requestAccessToken();
+    const created = await requestAccessToken();
+    setUser(created);
+    return created;
   }, []);
 
   const signOut = useCallback(() => {
@@ -162,12 +160,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshUser = useCallback(() => loadApiUser(), [loadApiUser]);
+  const hasSession = Boolean(sessionUserId);
+  // A session without a loaded API user is still "not ready", which prevents
+  // protected pages from redirecting while the JWT exchange is in flight.
+  const ready = !isPending && (!hasSession || Boolean(user) || Boolean(authError));
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        ready: !isPending && !syncing,
+        ready,
         authError,
         signIn,
         signUp,
