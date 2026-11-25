@@ -1,9 +1,16 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { ApiError, ACCESS_TOKEN_KEY, api, getErrorMessage, setAccessToken } from "@/lib/api";
-import { subscribeClientStore } from "@/lib/client-store";
-import type { UserProfile } from "@/types";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { authClient } from "@/lib/auth-client";
+import { api, getErrorMessage, setAccessToken } from "@/lib/api";
+import type { Role, UserProfile } from "@/types";
 
 type AuthContextValue = {
   user: UserProfile | null;
@@ -16,95 +23,165 @@ type AuthContextValue = {
   toggleBookmark: (tuitionId: string) => Promise<boolean>;
   refreshUser: () => Promise<UserProfile>;
 };
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// Restores server sessions and centralizes authenticated account actions for the client.
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const token = useSyncExternalStore(
-    (callback) => subscribeClientStore(ACCESS_TOKEN_KEY, callback),
-    () => typeof window === "undefined" ? null : window.localStorage.getItem(ACCESS_TOKEN_KEY),
-    () => "__loading__",
-  );
+function toUserProfile(user: Record<string, unknown>): UserProfile {
+  return {
+    _id: String(user._id ?? user.id ?? ""),
+    name: String(user.name ?? ""),
+    email: String(user.email ?? ""),
+    role: (user.role as Role) ?? "student",
+    plan: (user.plan as "free" | "pro") ?? "free",
+    image: typeof user.image === "string" ? user.image : undefined,
+    phone: typeof user.phone === "string" ? user.phone : undefined,
+    bio: typeof user.bio === "string" ? user.bio : undefined,
+    savedTuitions: Array.isArray(user.savedTuitions)
+      ? user.savedTuitions.filter((id): id is string => typeof id === "string")
+      : [],
+  };
+}
 
+// Exchanges the Better Auth cookie for the JWT used by every Express API call.
+async function requestAccessToken() {
+  const response = await fetch("/api/auth/token", { cache: "no-store" });
+  const payload = (await response.json().catch(() => ({}))) as {
+    token?: string;
+    user?: Record<string, unknown>;
+    message?: string;
+  };
+  if (!response.ok || !payload.token || !payload.user) {
+    throw new Error(payload.message ?? "Could not create an API session.");
+  }
+  setAccessToken(payload.token);
+  return toUserProfile(payload.user);
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const { data: session, isPending } = authClient.useSession();
+  const sessionUserId = session?.user?.id ?? null;
+
+  const loadApiUser = useCallback(async () => {
+    const profile = await api<UserProfile>("/auth/me");
+    const normalized = toUserProfile(profile as unknown as Record<string, unknown>);
+    setUser(normalized);
+    return normalized;
+  }, []);
+
+  // Once Better Auth resolves, trade its session for a JWT and load the
+  // authoritative profile from the Express users collection.
   useEffect(() => {
     let active = true;
-    if (!token || token === "__loading__") return () => { active = false; };
-    api<UserProfile>("/auth/me")
-      .then((profile) => { if (active) setUser(profile); })
-      .catch((cause: unknown) => {
-        if (!active) return;
-        if (cause instanceof ApiError && cause.status === 401) setAccessToken(null);
-        else setAuthError(getErrorMessage(cause));
-      });
-    return () => { active = false; };
-  }, [token]);
+    if (isPending) return () => { active = false; };
 
-  const ready = token !== "__loading__" && (!token || Boolean(user) || Boolean(authError));
+    if (!sessionUserId) {
+      setAccessToken(null);
+      setUser(null);
+      setSyncing(false);
+      return () => { active = false; };
+    }
+
+    setSyncing(true);
+    setAuthError(null);
+    requestAccessToken()
+      .then((profile) => {
+        if (active) setUser(profile);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setAccessToken(null);
+        setUser(null);
+        setAuthError(getErrorMessage(error));
+      })
+      .finally(() => {
+        if (active) setSyncing(false);
+      });
+
+    return () => { active = false; };
+  }, [isPending, sessionUserId]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     setAuthError(null);
-    const result = await api<{ token: string; user: UserProfile }>("/auth/signin", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    setAccessToken(result.token);
-    setUser(result.user);
-    return result.user;
+    const result = await authClient.signIn.email({ email, password, rememberMe: true });
+    if (result.error) {
+      const message = result.error.message ?? "Sign in failed.";
+      setAuthError(message);
+      throw new Error(message);
+    }
+    return requestAccessToken();
   }, []);
 
   const signUp = useCallback(async (profile: UserProfile, password: string) => {
     setAuthError(null);
-    const result = await api<{ token: string; user: UserProfile }>("/auth/signup", {
-      method: "POST",
-      body: JSON.stringify({ ...profile, password }),
+    const result = await authClient.signUp.email({
+      name: profile.name,
+      email: profile.email,
+      password,
+      role: profile.role,
     });
-    setAccessToken(result.token);
-    setUser(result.user);
-    return result.user;
+    if (result.error) {
+      const message = result.error.message ?? "Sign up failed.";
+      setAuthError(message);
+      throw new Error(message);
+    }
+    return requestAccessToken();
   }, []);
 
   const signOut = useCallback(() => {
     setAccessToken(null);
     setUser(null);
+    setAuthError(null);
+    void authClient.signOut().catch(() => {});
   }, []);
 
   const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
-    const profile = await api<UserProfile>("/users/profile", {
+    const payload: Record<string, string> = {};
+    for (const key of ["name", "phone", "bio", "image"] as const) {
+      if (typeof updates[key] === "string") payload[key] = updates[key];
+    }
+    const updated = await api<UserProfile>("/users/profile", {
       method: "PATCH",
-      body: JSON.stringify(updates),
+      body: JSON.stringify(payload),
     });
-    setUser(profile);
+    setUser(toUserProfile(updated as unknown as Record<string, unknown>));
   }, []);
 
   const toggleBookmark = useCallback(async (tuitionId: string) => {
-    const result = await api<{ saved: boolean }>(`/bookmarks/${encodeURIComponent(tuitionId)}`, {
-      method: "POST",
-    });
+    const result = await api<{ saved: boolean }>(`/bookmarks/${tuitionId}`, { method: "POST" });
     setUser((current) => {
       if (!current) return current;
-      const currentIds = current.savedTuitions ?? [];
-      return {
-        ...current,
-        savedTuitions: result.saved
-          ? [...new Set([...currentIds, tuitionId])]
-          : currentIds.filter((id) => id !== tuitionId),
-      };
+      const savedTuitions = result.saved
+        ? [...new Set([...(current.savedTuitions ?? []), tuitionId])]
+        : (current.savedTuitions ?? []).filter((id) => id !== tuitionId);
+      return { ...current, savedTuitions };
     });
     return result.saved;
   }, []);
 
-  const refreshUser = useCallback(async () => {
-    const profile = await api<UserProfile>("/auth/me");
-    setUser(profile);
-    return profile;
-  }, []);
+  const refreshUser = useCallback(() => loadApiUser(), [loadApiUser]);
 
-  return <AuthContext.Provider value={{ user, ready, authError, signIn, signUp, signOut, updateProfile, toggleBookmark, refreshUser }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        ready: !isPending && !syncing,
+        authError,
+        signIn,
+        signUp,
+        signOut,
+        updateProfile,
+        toggleBookmark,
+        refreshUser,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-// Pages use this hook to read or update the local demo session.
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used inside AuthProvider");

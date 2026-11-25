@@ -25,8 +25,10 @@ export function useApiData<T>(path: string | null, initialValue: T) {
 
   const reload = useCallback(() => setRevision((value) => value + 1), []);
   const isCurrent = result?.key === requestKey;
+  // Keep the last successful payload visible while a new query is in flight,
+  // so filter options and results do not flash empty on every keystroke.
   return {
-    data: isCurrent && result && "data" in result ? result.data : initialValue,
+    data: path && result && "data" in result ? result.data : initialValue,
     loading: Boolean(path) && !isCurrent,
     error: isCurrent ? result.error : null,
     reload,

@@ -9,7 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@better-auth/mongo-adapter": "^1.7.28",
+    "bcryptjs": "^3.0.3",
+    "better-auth": "^1.7.28",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.468.0",
+    "mongodb": "^7.9.1",
     "motion": "^12.0.0",
     "next": "16.4.6",
     "react": "19.3.0",
@@ -17,6 +22,8 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -209,7 +209,7 @@ export function AuthForm({ mode, defaultRole = 'student' }: AuthFormProps) {
             )}
           </div>
           <div className="form-note">
-            Your account is verified and stored by the MentorLagbe server.
+            Your account is protected and stored securely by Better Auth.
           </div>
         </div>
       </section>
