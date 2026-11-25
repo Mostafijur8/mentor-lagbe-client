@@ -1,44 +1,75 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { DashboardPageHeading, EmptyState, StatusBadge } from "@/components/dashboard";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
-import { demoTuitions } from "@/lib/mock-data";
-import { deleteTuition, getAllTuitionsSnapshot, subscribeTuitions, updateTuition } from "@/lib/tuition-store";
+import { useApiData } from "@/hooks/use-api-data";
+import { api, getErrorMessage } from "@/lib/api";
 import type { Tuition } from "@/types";
 
-// Tutors can search listings, revise details, close active offers, and remove their posts.
+// Tutors manage only their own listings through the authenticated tuition endpoints.
 export default function MyTuitionsPage() {
   const { user } = useAuth();
   const toast = useToast();
-  const allJson = useSyncExternalStore(subscribeTuitions, getAllTuitionsSnapshot, () => JSON.stringify(demoTuitions));
-  const all = useMemo(() => JSON.parse(allJson) as Tuition[], [allJson]);
+  const { data: mine, loading, error, reload } = useApiData<Tuition[]>(user ? "/tutor/tuitions" : null, []);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Tuition | null>(null);
   const [deleting, setDeleting] = useState<Tuition | null>(null);
-  const mine = all.filter((item) => item.tutorEmail === user?.email);
   const filtered = useMemo(() => mine.filter((item) => `${item.title} ${item.subject}`.toLowerCase().includes(query.toLowerCase())), [mine, query]);
 
-  function toggleActive(tuition: Tuition) {
-    const isActive = !tuition.isActive; updateTuition(tuition._id, { isActive });
-    toast(isActive ? "Your tuition is open again." : "Your tuition is now closed.", "info");
+  async function toggleActive(tuition: Tuition) {
+    const isActive = !tuition.isActive;
+    try {
+      await api(`/tuitions/${encodeURIComponent(tuition._id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive }),
+      });
+      reload();
+      toast(isActive ? "Your tuition is open again." : "Your tuition is now closed.", "info");
+    } catch (cause) {
+      toast(getErrorMessage(cause), "error");
+    }
   }
 
-  function saveEdit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); if (!editing) return;
+  async function saveEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editing) return;
     const form = new FormData(event.currentTarget);
-    updateTuition(editing._id, { title: String(form.get("title")).trim(), location: String(form.get("location")).trim(), monthlyFee: Number(form.get("monthlyFee")), description: String(form.get("description")).trim(), approvalStatus: "pending" });
-    setEditing(null); toast("Changes saved. This listing is back in review.");
+    try {
+      await api(`/tuitions/${encodeURIComponent(editing._id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: String(form.get("title")).trim(),
+          location: String(form.get("location")).trim(),
+          monthlyFee: Number(form.get("monthlyFee")),
+          description: String(form.get("description")).trim(),
+        }),
+      });
+      setEditing(null);
+      reload();
+      toast("Tuition details updated.");
+    } catch (cause) {
+      toast(getErrorMessage(cause), "error");
+    }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deleting) return;
-    deleteTuition(deleting._id); setDeleting(null); toast("Tuition listing removed.", "info");
+    try {
+      await api(`/tuitions/${encodeURIComponent(deleting._id)}`, { method: "DELETE" });
+      setDeleting(null);
+      reload();
+      toast("Tuition listing removed.", "info");
+    } catch (cause) {
+      toast(getErrorMessage(cause), "error");
+    }
   }
 
   return <><DashboardPageHeading eyebrow="YOUR TEACHING OFFERS" title="My tuitions" description="Manage the learning plans you’ve shared with the community." action={<Link href="/dashboard/tutor/post-tuition" className="button">+ New tuition</Link>} />
+    {error && <p className="form-error" role="alert">{error}</p>}
+    {loading && <p className="muted-note">Loading your tuitions…</p>}
     <div className="dashboard-panel"><div className="panel-heading"><div><h2>{mine.length} {mine.length === 1 ? "listing" : "listings"}</h2><p className="panel-subtitle">Edits are reviewed again to keep the community trustworthy.</p></div><label className="table-search"><span>⌕</span><input aria-label="Search my tuitions" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search listings"/></label></div>
       {filtered.length ? <div className="table-wrap"><table><thead><tr><th>Tuition</th><th>Monthly fee</th><th>Review status</th><th>Visibility</th><th>Actions</th></tr></thead><tbody>{filtered.map((item) => <tr key={item._id}><td><strong>{item.title}</strong><small className="table-subtext">{item.subject} · {item.classLevel}</small></td><td>৳{item.monthlyFee.toLocaleString()}</td><td><StatusBadge status={item.approvalStatus}/></td><td><StatusBadge status={item.isActive ? "Active" : "Closed"}/></td><td><div className="row-actions"><button className="table-action" onClick={() => setEditing(item)}>Edit</button><button className="table-action" onClick={() => toggleActive(item)}>{item.isActive ? "Close" : "Open"}</button><button className="table-action danger" onClick={() => setDeleting(item)}>Delete</button></div></td></tr>)}</tbody></table></div> : <EmptyState title={query ? "No listings match this search" : "Your first tuition is waiting"} description={query ? "Try searching with a different title or subject." : "Create a thoughtful listing and help a learner take the next step."} action={!query && <Link href="/dashboard/tutor/post-tuition" className="button button-small">Post a tuition</Link>} />}
     </div>

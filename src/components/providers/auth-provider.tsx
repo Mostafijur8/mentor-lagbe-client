@@ -1,75 +1,107 @@
 "use client";
 
-import { createContext, useCallback, useContext, useSyncExternalStore, type ReactNode } from "react";
-import { demoUsers } from "@/lib/mock-data";
-import {
-  readClientStore,
-  removeClientStore,
-  subscribeClientStore,
-  writeClientStore,
-} from "@/lib/client-store";
-import type { Role, UserProfile } from "@/types";
+import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { ApiError, ACCESS_TOKEN_KEY, api, getErrorMessage, setAccessToken } from "@/lib/api";
+import { subscribeClientStore } from "@/lib/client-store";
+import type { UserProfile } from "@/types";
 
 type AuthContextValue = {
   user: UserProfile | null;
   ready: boolean;
-  signIn: (email: string, role?: Role) => UserProfile;
-  signUp: (user: UserProfile) => UserProfile;
+  authError: string | null;
+  signIn: (email: string, password: string) => Promise<UserProfile>;
+  signUp: (user: UserProfile, password: string) => Promise<UserProfile>;
   signOut: () => void;
-  updateProfile: (updates: Partial<UserProfile>) => void;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  toggleBookmark: (tuitionId: string) => Promise<boolean>;
+  refreshUser: () => Promise<UserProfile>;
 };
 const AuthContext = createContext<AuthContextValue | null>(null);
-const STORAGE_KEY = "mentorlagbe-demo-user";
-const USERS_KEY = "mentorlagbe-demo-users";
 
-// This client-only session keeps all interface flows usable until the backend is connected.
+// Restores server sessions and centralizes authenticated account actions for the client.
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const raw = useSyncExternalStore(
-    (callback) => subscribeClientStore(STORAGE_KEY, callback),
-    () => typeof window === "undefined" ? null : window.localStorage.getItem(STORAGE_KEY),
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const token = useSyncExternalStore(
+    (callback) => subscribeClientStore(ACCESS_TOKEN_KEY, callback),
+    () => typeof window === "undefined" ? null : window.localStorage.getItem(ACCESS_TOKEN_KEY),
     () => "__loading__",
   );
-  const ready = raw !== "__loading__";
-  let user: UserProfile | null = null;
-  try { if (raw && raw !== "__loading__") user = JSON.parse(raw) as UserProfile; } catch { user = null; }
 
-  const save = useCallback((next: UserProfile | null) => {
-    if (next) writeClientStore(STORAGE_KEY, next);
-    else removeClientStore(STORAGE_KEY);
+  useEffect(() => {
+    let active = true;
+    if (!token || token === "__loading__") return () => { active = false; };
+    api<UserProfile>("/auth/me")
+      .then((profile) => { if (active) setUser(profile); })
+      .catch((cause: unknown) => {
+        if (!active) return;
+        if (cause instanceof ApiError && cause.status === 401) setAccessToken(null);
+        else setAuthError(getErrorMessage(cause));
+      });
+    return () => { active = false; };
+  }, [token]);
+
+  const ready = token !== "__loading__" && (!token || Boolean(user) || Boolean(authError));
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    setAuthError(null);
+    const result = await api<{ token: string; user: UserProfile }>("/auth/signin", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    setAccessToken(result.token);
+    setUser(result.user);
+    return result.user;
   }, []);
 
-  const saveDirectoryProfile = useCallback((profile: UserProfile) => {
-    const users = readClientStore<UserProfile[]>(USERS_KEY, demoUsers);
-    writeClientStore(USERS_KEY, [
-      profile,
-      ...users.filter((item) => item.email !== profile.email),
-    ]);
+  const signUp = useCallback(async (profile: UserProfile, password: string) => {
+    setAuthError(null);
+    const result = await api<{ token: string; user: UserProfile }>("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ ...profile, password }),
+    });
+    setAccessToken(result.token);
+    setUser(result.user);
+    return result.user;
   }, []);
 
-  const signIn = useCallback((email: string, role: Role = "student") => {
-    const existing = readClientStore<UserProfile[]>(USERS_KEY, demoUsers)
-      .find((item) => item.email === email);
-    const profile: UserProfile = existing ? { ...existing, role } : { name: email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()), email, role, plan: "free" };
-    save(profile);
-    saveDirectoryProfile(profile);
-    return profile;
-  }, [save, saveDirectoryProfile]);
+  const signOut = useCallback(() => {
+    setAccessToken(null);
+    setUser(null);
+  }, []);
 
-  const signUp = useCallback((profile: UserProfile) => {
-    save(profile);
-    saveDirectoryProfile(profile);
-    return profile;
-  }, [save, saveDirectoryProfile]);
-  const signOut = useCallback(() => save(null), [save]);
-  const updateProfile = useCallback((updates: Partial<UserProfile>) => {
-    if (user) {
-      const updatedProfile = { ...user, ...updates };
-      save(updatedProfile);
-      saveDirectoryProfile(updatedProfile);
-    }
-  }, [save, saveDirectoryProfile, user]);
+  const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
+    const profile = await api<UserProfile>("/users/profile", {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+    setUser(profile);
+  }, []);
 
-  return <AuthContext.Provider value={{ user, ready, signIn, signUp, signOut, updateProfile }}>{children}</AuthContext.Provider>;
+  const toggleBookmark = useCallback(async (tuitionId: string) => {
+    const result = await api<{ saved: boolean }>(`/bookmarks/${encodeURIComponent(tuitionId)}`, {
+      method: "POST",
+    });
+    setUser((current) => {
+      if (!current) return current;
+      const currentIds = current.savedTuitions ?? [];
+      return {
+        ...current,
+        savedTuitions: result.saved
+          ? [...new Set([...currentIds, tuitionId])]
+          : currentIds.filter((id) => id !== tuitionId),
+      };
+    });
+    return result.saved;
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    const profile = await api<UserProfile>("/auth/me");
+    setUser(profile);
+    return profile;
+  }, []);
+
+  return <AuthContext.Provider value={{ user, ready, authError, signIn, signUp, signOut, updateProfile, toggleBookmark, refreshUser }}>{children}</AuthContext.Provider>;
 }
 
 // Pages use this hook to read or update the local demo session.

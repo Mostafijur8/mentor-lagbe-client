@@ -6,8 +6,7 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { DashboardPageHeading } from '@/components/dashboard';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useToast } from '@/components/ui/toast-provider';
-import { demoTuitions } from '@/lib/mock-data';
-import { createTuition, customTuitionCountBy } from '@/lib/tuition-store';
+import { api, getErrorMessage } from '@/lib/api';
 import type { Tuition, TuitionMode } from '@/types';
 
 const subjects = [
@@ -43,7 +42,7 @@ function readFile(file: File) {
   });
 }
 
-// The validated form creates pending tutor listings and previews images locally or through ImgBB.
+// The form uploads images through the authenticated API and submits new listings for review.
 export function TuitionForm() {
   const { user } = useAuth();
   const toast = useToast();
@@ -73,31 +72,15 @@ export function TuitionForm() {
 
   async function uploadBanner() {
     if (!banner) return '';
-    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-    if (!apiKey) return preview;
     const body = new FormData();
     body.append('image', banner);
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-      method: 'POST',
-      body,
-    });
-    if (!response.ok) throw new Error('Image upload failed. Please retry or choose another image.');
-    const result = (await response.json()) as { data?: { url?: string } };
-    if (!result.data?.url) throw new Error('The image service did not return a URL.');
-    return result.data.url;
+    const result = await api<{ url: string }>('/upload/image', { method: 'POST', body });
+    return result.url;
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user) return;
-    const currentCount =
-      demoTuitions.filter((item) => item.tutorEmail === user.email).length +
-      customTuitionCountBy(user.email);
-    if (user.plan === 'free' && currentCount >= 2) {
-      toast('Free tutors can post up to 2 tuitions. Explore Pro for unlimited listings.', 'info');
-      router.push('/pricing');
-      return;
-    }
     if (!banner) {
       toast('Add a banner image to continue.', 'error');
       return;
@@ -106,8 +89,7 @@ export function TuitionForm() {
     setUploading(true);
     try {
       const bannerImage = await uploadBanner();
-      const tuition: Tuition = {
-        _id: `tuition-${Date.now()}`,
+      const tuition = {
         title: String(form.get('title')).trim(),
         subject: String(form.get('subject')),
         classLevel: String(form.get('classLevel')),
@@ -117,17 +99,12 @@ export function TuitionForm() {
         daysPerWeek: Number(form.get('daysPerWeek')),
         bannerImage,
         description: String(form.get('description')).trim(),
-        tutorName: user.name,
-        tutorEmail: user.email,
-        approvalStatus: 'pending',
-        isActive: true,
-        createdAt: new Date().toISOString().slice(0, 10),
       };
-      createTuition(tuition);
+      await api<Tuition>('/tuitions', { method: 'POST', body: JSON.stringify(tuition) });
       toast('Tuition submitted for review. You can find it in My tuitions.');
       router.push('/dashboard/tutor/my-tuitions');
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Could not save this tuition.', 'error');
+      toast(getErrorMessage(error), 'error');
     } finally {
       setUploading(false);
     }

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+.form-error{padding:10px 12px;border:1px solid #f0cbc5;border-radius:8px;background:#fff2ef;color:#a33b2c;font-size:12px;line-height:1.6}
+
 /* Design tokens keep the visual language consistent across public and dashboard pages. */
 :root {
   --ink: #15251f;

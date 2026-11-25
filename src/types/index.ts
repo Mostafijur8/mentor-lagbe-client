@@ -5,6 +5,7 @@ export type TuitionMode = "Online" | "Offline";
 export type ApplicationStatus = "pending" | "accepted" | "rejected";
 
 export interface UserProfile {
+  _id?: string;
   name: string;
   email: string;
   role: Role;
@@ -12,6 +13,8 @@ export interface UserProfile {
   image?: string;
   phone?: string;
   bio?: string;
+  savedTuitions?: string[];
+  createdAt?: string;
 }
 
 export interface Tuition {
@@ -29,6 +32,15 @@ export interface Tuition {
   tutorEmail: string;
   approvalStatus: "pending" | "approved" | "rejected";
   isActive: boolean;
+  createdAt: string;
+  reviews?: TuitionReview[];
+}
+
+export interface TuitionReview {
+  studentEmail: string;
+  studentName: string;
+  rating: number;
+  comment: string;
   createdAt: string;
 }
 

@@ -2,52 +2,23 @@
 
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
-import { useSyncExternalStore } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
-import { demoApplications } from "@/lib/mock-data";
-import {
-  getClientStoreSnapshot,
-  readClientStore,
-  subscribeClientStore,
-  writeClientStore,
-} from "@/lib/client-store";
-import type { TuitionApplication } from "@/types";
+import { useApiData } from "@/hooks/use-api-data";
+import { api, getErrorMessage } from "@/lib/api";
+import type { TuitionApplication, TuitionReview as Review } from "@/types";
 
-type TuitionReview = {
-  _id: string;
-  tuitionId: string;
-  studentEmail: string;
-  studentName: string;
-  rating: number;
-  feedback: string;
-  createdAt: string;
-};
-
-const reviewsKey = "mentorlagbe-demo-reviews";
-const applicationsKey = "mentorlagbe-demo-applications";
-
-export function TuitionReviews({ tuitionId }: { tuitionId: string }) {
+export function TuitionReviews({ tuitionId, initialReviews }: { tuitionId: string; initialReviews: Review[] }) {
   const { user } = useAuth();
   const toast = useToast();
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState("");
-  const reviewsJson = useSyncExternalStore(
-    (callback) => subscribeClientStore(reviewsKey, callback),
-    () => getClientStoreSnapshot(reviewsKey, [] as TuitionReview[]),
-    () => JSON.stringify([]),
+  const [newReviews, setNewReviews] = useState<Review[]>([]);
+  const { data: applications } = useApiData<TuitionApplication[]>(user?.role === "student" ? "/student/applications" : null, []);
+  const tuitionReviews = useMemo(
+    () => [...initialReviews, ...newReviews.filter((review) => !initialReviews.some((item) => item.studentEmail === review.studentEmail))],
+    [initialReviews, newReviews],
   );
-  const applicationsJson = useSyncExternalStore(
-    (callback) => subscribeClientStore(applicationsKey, callback),
-    () => getClientStoreSnapshot(applicationsKey, demoApplications),
-    () => JSON.stringify(demoApplications),
-  );
-  const reviews = useMemo(() => JSON.parse(reviewsJson) as TuitionReview[], [reviewsJson]);
-  const applications = useMemo(
-    () => JSON.parse(applicationsJson) as TuitionApplication[],
-    [applicationsJson],
-  );
-  const tuitionReviews = reviews.filter((review) => review.tuitionId === tuitionId);
   const myReview = tuitionReviews.find((review) => review.studentEmail === user?.email);
   const canReview = Boolean(
     user?.role === "student" &&
@@ -62,7 +33,7 @@ export function TuitionReviews({ tuitionId }: { tuitionId: string }) {
     ? tuitionReviews.reduce((total, review) => total + review.rating, 0) / tuitionReviews.length
     : 0;
 
-  function submitReview(event: FormEvent<HTMLFormElement>) {
+  async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user || !canReview) {
       toast("Only students with an accepted application can review this tuition.", "error");
@@ -78,25 +49,18 @@ export function TuitionReviews({ tuitionId }: { tuitionId: string }) {
       return;
     }
 
-    const current = readClientStore<TuitionReview[]>(reviewsKey, []);
-    if (current.some((review) => review.tuitionId === tuitionId && review.studentEmail === user.email)) {
-      toast("You have already reviewed this tuition.", "info");
-      return;
+    try {
+      const review = await api<Review>(`/tuitions/${encodeURIComponent(tuitionId)}/reviews`, {
+        method: "POST",
+        body: JSON.stringify({ rating, comment: trimmedFeedback }),
+      });
+      setNewReviews((current) => [...current, review]);
+      setRating(0);
+      setFeedback("");
+      toast("Thank you for sharing your learning experience.");
+    } catch (error) {
+      toast(getErrorMessage(error), "error");
     }
-
-    const review: TuitionReview = {
-      _id: `review-${Date.now()}`,
-      tuitionId,
-      studentEmail: user.email,
-      studentName: user.name,
-      rating,
-      feedback: trimmedFeedback,
-      createdAt: new Date().toISOString(),
-    };
-    writeClientStore(reviewsKey, [review, ...current]);
-    setRating(0);
-    setFeedback("");
-    toast("Thank you for sharing your learning experience.");
   }
 
   return (
@@ -117,7 +81,7 @@ export function TuitionReviews({ tuitionId }: { tuitionId: string }) {
       {tuitionReviews.length ? (
         <div className="review-list">
           {tuitionReviews.map((review) => (
-            <article className="review-item" key={review._id}>
+            <article className="review-item" key={`${review.studentEmail}-${review.createdAt}`}>
               <div className="review-item-heading">
                 <strong>{review.studentName}</strong>
                 <span className="review-stars" aria-label={`${review.rating} out of 5 stars`}>
@@ -125,7 +89,7 @@ export function TuitionReviews({ tuitionId }: { tuitionId: string }) {
                   {"☆".repeat(5 - review.rating)}
                 </span>
               </div>
-              <p>{review.feedback}</p>
+              <p>{review.comment}</p>
               <time dateTime={review.createdAt}>
                 {new Date(review.createdAt).toLocaleDateString("en-BD", {
                   day: "numeric",

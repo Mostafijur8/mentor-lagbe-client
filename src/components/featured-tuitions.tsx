@@ -1,26 +1,14 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useApiData } from "@/hooks/use-api-data";
 import { TuitionCard } from "@/components/tuition-card";
-import { demoTuitions } from "@/lib/mock-data";
-import { getAllTuitionsSnapshot, subscribeTuitions } from "@/lib/tuition-store";
 import type { Tuition } from "@/types";
 
 export function FeaturedTuitions() {
-  const tuitionsJson = useSyncExternalStore(
-    subscribeTuitions,
-    getAllTuitionsSnapshot,
-    () => JSON.stringify(demoTuitions),
-  );
-  const tuitions = useMemo(() => JSON.parse(tuitionsJson) as Tuition[], [tuitionsJson]);
-  const featured = useMemo(
-    () => tuitions
-      .filter((tuition) => tuition.approvalStatus === "approved" && tuition.isActive)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 6),
-    [tuitions],
-  );
+  const { data: featured, loading, error } = useApiData<Tuition[]>("/tuitions?featured=true&limit=6", []);
 
+  if (loading) return <p className="muted-note">Loading featured tuitions…</p>;
+  if (error) return <p className="form-error" role="alert">{error}</p>;
   if (!featured.length) {
     return <p className="empty-results">New mentor listings are on their way. Check back soon.</p>;
   }

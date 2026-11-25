@@ -5,13 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useToast } from '@/components/ui/toast-provider';
-import { demoApplications } from '@/lib/mock-data';
-import { readClientStore, writeClientStore } from '@/lib/client-store';
-import type { Tuition, TuitionApplication } from '@/types';
+import { ApiError, api, getErrorMessage } from '@/lib/api';
+import type { Tuition } from '@/types';
 
-const applicationsKey = 'mentorlagbe-demo-applications';
-
-// Students can apply once per tuition and keep track of each request in their workspace.
+// Applications are validated, deduplicated, and persisted by the student API.
 export function ApplicationForm({ tuition }: { tuition: Tuition }) {
   const { user, ready, signOut } = useAuth();
   const toast = useToast();
@@ -20,41 +17,34 @@ export function ApplicationForm({ tuition }: { tuition: Tuition }) {
   const [schedule, setSchedule] = useState('');
   const [note, setNote] = useState('');
   const [sent, setSent] = useState(false);
-  const applications = readClientStore(applicationsKey, demoApplications);
-  const duplicate = Boolean(
-    user &&
-    applications.some((item) => item.tuitionId === tuition._id && item.studentEmail === user.email),
-  );
+  const [busy, setBusy] = useState(false);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user || user.role !== 'student') return;
-    const current = readClientStore(applicationsKey, demoApplications);
-    if (
-      current.some((item) => item.tuitionId === tuition._id && item.studentEmail === user.email)
-    ) {
-      toast('You have already applied to this tuition.', 'info');
+    setBusy(true);
+    try {
+      await api('/applications', {
+        method: 'POST',
+        body: JSON.stringify({
+          tuitionId: tuition._id,
+          studentPhone: phone,
+          preferredSchedule: schedule,
+          studentNote: note,
+        }),
+      });
       setSent(true);
-      return;
+      toast('Application sent. The tutor will be in touch soon.');
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        setSent(true);
+        toast('You have already applied to this tuition.', 'info');
+      } else {
+        toast(getErrorMessage(error), 'error');
+      }
+    } finally {
+      setBusy(false);
     }
-    const application: TuitionApplication = {
-      _id: `app-${Date.now()}`,
-      tuitionId: tuition._id,
-      tuitionTitle: tuition.title,
-      subject: tuition.subject,
-      monthlyFee: tuition.monthlyFee,
-      tutorEmail: tuition.tutorEmail,
-      studentName: user.name,
-      studentEmail: user.email,
-      studentPhone: phone,
-      preferredSchedule: schedule,
-      studentNote: note,
-      status: 'pending',
-      appliedAt: new Date().toISOString().slice(0, 10),
-    };
-    writeClientStore(applicationsKey, [application, ...current]);
-    setSent(true);
-    toast('Application sent. The tutor will be in touch soon.');
   }
 
   if (!ready)
@@ -96,7 +86,7 @@ export function ApplicationForm({ tuition }: { tuition: Tuition }) {
         </button>
       </div>
     );
-  if (duplicate || sent)
+  if (sent)
     return (
       <div className="apply-card">
         <span className="success-icon">✓</span>
@@ -148,8 +138,8 @@ export function ApplicationForm({ tuition }: { tuition: Tuition }) {
             placeholder="Share a little about your goals…"
           />
         </div>
-        <button className="button button-full" type="submit">
-          Send application <span>↗</span>
+        <button className="button button-full" type="submit" disabled={busy}>
+          {busy ? 'Sending…' : 'Send application'} <span>↗</span>
         </button>
       </form>
       <small className="muted-note">

@@ -6,7 +6,7 @@ MentorLagbe is a responsive tuition discovery and mentorship frontend for studen
 
 ## Current scope
 
-This repository contains the frontend phase only. Authentication, listings, applications, bookmarks, and dashboard actions use browser demo storage so the complete interface can be reviewed before the Express/MongoDB/BetterAuth/Stripe backend is built. Demo storage is not secure authentication or production persistence.
+This repository contains the Next.js frontend and connects to the sibling `mentor-lagbe-server` Express/MongoDB API. Authentication, listings, applications, bookmarks, and dashboard actions use server endpoints; the API issues JWTs for protected requests.
 
 ## Run locally
 
@@ -16,17 +16,25 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+In a second terminal, move to the sibling `mentor-lagbe-server` folder and run:
+
+```powershell
+Set-Location ..\mentor-lagbe-server
+Copy-Item .env.example .env
+npm install
+npm run dev
+```
+
+Configure MongoDB, JWT, allowed client origin, Stripe, and ImgBB values in the server `.env`. Run `npm run seed` after the API starts to add sample tutor listings. Then open `http://localhost:3000`.
 
 ## Demo workspaces
 
-On `/sign-in`, choose a preview role and use **Fill a demo account**. The demo form accepts any non-empty password.
+On `/sign-in`, choose **Fill tutor demo credentials** after seeding the backend.
 
-- Student: `ayesha@example.com`
-- Tutor: `nafisa@example.com`
-- Admin: `admin@mentorlagbe.com`
+- Tutor: `rahim.tutor@example.com`
+- Seeded tutor password: `Password123!`
 
-The demo sign-in accepts any non-empty password. These are browser-preview accounts, not production credentials.
+Students and tutors can register from `/sign-up`. Admin accounts must be provisioned by an administrator.
 
 ## Main features
 
@@ -44,10 +52,9 @@ The demo sign-in accepts any non-empty password. These are browser-preview accou
 
 Copy `.env.example` to `.env.local` and set values when needed:
 
-- `NEXT_PUBLIC_API_URL` — future Express API base URL.
-- `NEXT_PUBLIC_IMGBB_API_KEY` — optional ImgBB browser preview upload. `NEXT_PUBLIC_` values are visible in the browser; move upload credentials behind the backend before production.
+- `NEXT_PUBLIC_API_URL` — Express API base URL (defaults to `http://localhost:5000/api`).
 
-No payment or authentication secrets are stored in the frontend.
+Keep database, JWT, Stripe, and ImgBB secrets in the backend environment only.
 
 ## Packages
 

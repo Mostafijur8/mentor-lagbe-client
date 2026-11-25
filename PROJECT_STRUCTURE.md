@@ -17,12 +17,12 @@ src/
 │   └── page.tsx                       # landing page
 ├── components/
 │   ├── forms/                         # auth, application, profile, tuition forms
-│   ├── providers/                     # demo session context
+│   ├── providers/                     # backend session context
 │   ├── ui/                            # toast provider and shared controls
 │   └── ...                            # navigation, cards, dashboards, page modules
-├── hooks/                             # reusable React hooks
-├── lib/                               # API boundary, demo data, browser stores, helpers
+├── hooks/                             # API data, session, and toast hooks
+├── lib/                               # API boundary, demo data, browser preferences, helpers
 └── types/                             # shared domain types
 ```
 
-The `server/` folder is intentionally not part of this frontend phase. Route groups `(auth)`, `(payment)`, and `(public)` do not add URL segments.
+The backend API is maintained in the sibling `mentor-lagbe-server` repository. Route groups `(auth)`, `(payment)`, and `(public)` do not add URL segments.

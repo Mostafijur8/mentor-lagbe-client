@@ -5,14 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useToast } from '@/components/ui/toast-provider';
+import { getErrorMessage } from '@/lib/api';
 import type { Role, UserProfile } from '@/types';
 
 type AuthFormProps = { mode: 'sign-in' | 'sign-up'; defaultRole?: 'student' | 'tutor' };
 
-// One compact auth form handles validation and the temporary local demo-session flow.
+// One auth form sends account credentials to the server and routes by its verified role.
 export function AuthForm({ mode, defaultRole = 'student' }: AuthFormProps) {
   const isSignUp = mode === 'sign-up';
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, authError } = useAuth();
   const toast = useToast();
   const router = useRouter();
   const [name, setName] = useState('');
@@ -23,7 +24,7 @@ export function AuthForm({ mode, defaultRole = 'student' }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSignUp && password.length < 8) {
       toast('Use at least 8 characters for your password.', 'error');
@@ -34,33 +35,32 @@ export function AuthForm({ mode, defaultRole = 'student' }: AuthFormProps) {
       return;
     }
     setBusy(true);
-    window.setTimeout(() => {
+    try {
+      let profile: UserProfile;
       if (isSignUp) {
-        const profile: UserProfile = {
+        const newProfile: UserProfile = {
           name: name.trim(),
           email: email.trim().toLowerCase(),
           role: role as 'student' | 'tutor',
           plan: 'free',
         };
-        signUp(profile);
+        profile = await signUp(newProfile, password);
         toast('Your account is ready. Welcome to MentorLagbe!');
       } else {
-        signIn(email.trim().toLowerCase(), role);
+        profile = await signIn(email.trim().toLowerCase(), password);
         toast('Welcome back. Your workspace is ready!');
       }
-      router.push(`/dashboard/${role}`);
-    }, 350);
+      router.push(`/dashboard/${profile.role}`);
+    } catch (error) {
+      toast(getErrorMessage(error), 'error');
+    } finally {
+      setBusy(false);
+    }
   }
 
   function useDemoAccount() {
-    const demo =
-      role === 'admin'
-        ? 'admin@mentorlagbe.com'
-        : role === 'tutor'
-          ? 'nafisa@example.com'
-          : 'ayesha@example.com';
-    setEmail(demo);
-    setPassword('mentorlagbe');
+    setEmail('rahim.tutor@example.com');
+    setPassword('Password123!');
   }
 
   return (
@@ -95,6 +95,7 @@ export function AuthForm({ mode, defaultRole = 'student' }: AuthFormProps) {
               ? 'Meet kind, capable mentors who’ll help you take your next step with confidence.'
               : 'Pick up where you left off. Your next breakthrough is closer than you think.'}
           </p>
+          {authError && <p className="form-error" role="alert">{authError}</p>}
         </div>
         <span className="auth-art-note">“You don’t have to figure it all out alone.”</span>
         <div className="auth-art-decoration">
@@ -176,24 +177,20 @@ export function AuthForm({ mode, defaultRole = 'student' }: AuthFormProps) {
                 />
               </div>
             )}
-            <div className="form-field">
-              <label htmlFor="auth-role">
-                {isSignUp ? 'I’m here as a' : 'Preview workspace role'}
-              </label>
-              <select
-                id="auth-role"
-                value={role}
-                onChange={(event) => setRole(event.target.value as Role)}
-              >
+            {isSignUp && <div className="form-field">
+              <label htmlFor="auth-role">I’m here as a</label>
+              <select id="auth-role" value={role} onChange={(event) => setRole(event.target.value as Role)}>
                 <option value="student">Student</option>
                 <option value="tutor">Tutor</option>
-                {!isSignUp && <option value="admin">Admin</option>}
               </select>
-            </div>
+            </div>}
             {!isSignUp && (
-              <button type="button" className="demo-fill" onClick={useDemoAccount}>
-                Fill a demo {role} account
-              </button>
+              <div className="form-field">
+                <label>Seeded backend demo</label>
+                <button type="button" className="demo-fill" onClick={useDemoAccount}>
+                  Fill tutor demo credentials
+                </button>
+              </div>
             )}
             <button className="button" type="submit" disabled={busy}>
               {busy ? 'One moment…' : isSignUp ? 'Create account' : 'Sign in'}
@@ -212,8 +209,7 @@ export function AuthForm({ mode, defaultRole = 'student' }: AuthFormProps) {
             )}
           </div>
           <div className="form-note">
-            Frontend preview only: accounts are stored in this browser. Connect the auth API before
-            deployment.
+            Your account is verified and stored by the MentorLagbe server.
           </div>
         </div>
       </section>

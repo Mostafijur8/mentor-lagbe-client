@@ -5,8 +5,9 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useToast } from '@/components/ui/toast-provider';
 import { DashboardPageHeading } from '@/components/dashboard';
+import { api, getErrorMessage } from '@/lib/api';
 
-// Members can maintain their public profile and upload a photo or paste an image URL.
+// Member profile changes and image uploads are persisted through authenticated API routes.
 export function ProfileForm() {
   const { user, updateProfile } = useAuth();
   const toast = useToast();
@@ -39,24 +40,17 @@ export function ProfileForm() {
     setSaving(true);
     try {
       let image = imageUrl.trim();
-      const key = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-      if (imageFile && key) {
+      if (imageFile) {
         const form = new FormData();
         form.append('image', imageFile);
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=${key}`, {
-          method: 'POST',
-          body: form,
-        });
-        if (!response.ok) throw new Error('Photo upload failed. Please try again.');
-        const result = (await response.json()) as { data?: { url?: string } };
-        if (!result.data?.url) throw new Error('The image service did not return a URL.');
-        image = result.data.url;
-      } else if (imageFile) image = preview;
-      updateProfile({ name: name.trim(), phone: phone.trim(), bio: bio.trim(), image });
+        const result = await api<{ url: string }>('/upload/image', { method: 'POST', body: form });
+        image = result.url;
+      }
+      await updateProfile({ name: name.trim(), phone: phone.trim(), bio: bio.trim(), image });
       setImageUrl(image);
       toast('Your profile has been updated.');
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Could not update your profile.', 'error');
+      toast(getErrorMessage(error), 'error');
     } finally {
       setSaving(false);
     }

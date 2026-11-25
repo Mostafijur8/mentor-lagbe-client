@@ -1,8 +1,12 @@
-import { DashboardCards, DashboardPageHeading, StatusBadge } from '@/components/dashboard';
-import { demoPayments } from '@/lib/mock-data';
+"use client";
 
-// Admins can review plan type, customer, amount, transaction ID, and payment date here.
+import { DashboardCards, DashboardPageHeading, StatusBadge } from '@/components/dashboard';
+import { useApiData } from '@/hooks/use-api-data';
+import type { PaymentRecord } from '@/types';
+
+// Transaction history comes from backend-verified payments rather than sample records.
 export default function AdminTransactionsPage() {
+  const { data: demoPayments, loading, error } = useApiData<PaymentRecord[]>('/admin/payments', []);
   const revenue = demoPayments.reduce((sum, record) => sum + record.amount, 0);
   return (
     <>
@@ -27,6 +31,8 @@ export default function AdminTransactionsPage() {
           ],
         ]}
       />
+      {error && <p className="form-error" role="alert">{error}</p>}
+      {loading && <p className="muted-note">Loading transaction history…</p>}
       <div className="dashboard-panel">
         <div className="panel-heading">
           <div>

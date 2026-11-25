@@ -1,21 +1,21 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState } from "react";
 import { TuitionCard } from "@/components/tuition-card";
-import { demoTuitions } from "@/lib/mock-data";
-import { getAllTuitionsSnapshot, subscribeTuitions } from "@/lib/tuition-store";
+import { useApiData } from "@/hooks/use-api-data";
+import type { Tuition } from "@/types";
 
 const pageSize = 6;
 
-// Search and filter the approved demo listings in the browser until server search is available.
+// Public discovery reads approved listings from the API and keeps filtering responsive locally.
 export function TuitionBrowser({ initialSubject = "" }: { initialSubject?: string }) {
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState(initialSubject || "All subjects");
   const [classLevel, setClassLevel] = useState("Any level");
   const [mode, setMode] = useState("Any mode");
   const [page, setPage] = useState(1);
-  const tuitionsJson = useSyncExternalStore(subscribeTuitions, getAllTuitionsSnapshot, () => JSON.stringify(demoTuitions));
-  const tuitions = useMemo(() => JSON.parse(tuitionsJson) as typeof demoTuitions, [tuitionsJson]);
+  const { data: pageResult, loading, error } = useApiData<{ tuitions: Tuition[] }>("/tuitions?limit=50", { tuitions: [] });
+  const tuitions = pageResult.tuitions;
   const subjects = [...new Set(tuitions.map((item) => item.subject))].sort();
   const levels = [...new Set(tuitions.map((item) => item.classLevel))].sort();
   const results = useMemo(() => tuitions.filter((item) => {
@@ -44,6 +44,8 @@ export function TuitionBrowser({ initialSubject = "" }: { initialSubject?: strin
       <label className="sr-only" htmlFor="mode-filter">Learning mode</label><select id="mode-filter" value={mode} onChange={(event) => changeFilter(setMode, event.target.value)}><option>Any mode</option><option>Online</option><option>Offline</option></select>
     </div>
     <div className="results-heading"><h2>Thoughtful matches <span>({results.length})</span></h2><span>Reviewed mentors · Updated regularly</span></div>
+    {error && <p className="form-error" role="alert">{error}</p>}
+    {loading && <p className="muted-note">Loading tutor listings…</p>}
     {visible.length ? <div className="tuition-grid">{visible.map((item) => <TuitionCard key={item._id} tuition={item} />)}</div> : <div className="empty-results"><span>⌕</span><h2>No matches just yet</h2><p>Try a broader search or clear a filter to see more tutors.</p><button className="button button-outline" onClick={clearFilters}>Clear filters</button></div>}
     {results.length > pageSize && <nav className="pagination" aria-label="Tuition pages"><button disabled={page === 1} onClick={() => setPage((current) => current - 1)}>← Previous</button><span>Page <strong>{page}</strong> of {totalPages}</span><button disabled={page === totalPages} onClick={() => setPage((current) => current + 1)}>Next →</button></nav>}
   </section>;
