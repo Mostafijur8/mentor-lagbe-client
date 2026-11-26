@@ -730,6 +730,15 @@ html[data-theme="dark"] .hero-section .avatar-stack span {
   box-shadow: 0 10px 20px rgba(36, 92, 69, .16);
 }
 
+.photo-save:disabled {
+  border-color: var(--line);
+  background: var(--green-light);
+  color: var(--green);
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
 .photo-dirty {
   display: block;
   margin: 8px 0 0;
@@ -756,7 +765,7 @@ html[data-theme="dark"] .hero-section .avatar-stack span {
   cursor: wait;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 900px) {
   .account-trigger {
     padding: 3px;
   }
@@ -765,7 +774,9 @@ html[data-theme="dark"] .hero-section .avatar-stack span {
   .account-chevron {
     display: none;
   }
+}
 
+@media (max-width: 680px) {
   .account-dropdown {
     right: -4px;
     width: min(280px, calc(100vw - 28px));
