@@ -366,6 +366,70 @@ html[data-theme="dark"] .pagination button:disabled {
   color: #66736a;
 }
 
+html[data-theme="dark"] .user-avatar {
+  background: linear-gradient(145deg, #2a4233, #1e3227);
+  color: #a8d1b3;
+}
+
+html[data-theme="dark"] .account-trigger:hover,
+html[data-theme="dark"] .account-trigger[aria-expanded="true"] {
+  background: #1f2d26;
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .account-avatar-wrap .user-avatar,
+html[data-theme="dark"] .account-presence {
+  border-color: #1a2420;
+}
+
+html[data-theme="dark"] .account-dropdown {
+  background: #1a2420;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+}
+
+html[data-theme="dark"] .account-dropdown-links a:hover,
+html[data-theme="dark"] .account-dropdown-signout:hover {
+  background: #263b2e;
+  color: #a8d1b3;
+}
+
+html[data-theme="dark"] .account-plan-pill {
+  background: #263b2e;
+  color: #a8d1b3;
+}
+
+html[data-theme="dark"] .account-dropdown-signout,
+html[data-theme="dark"] .account-dropdown-signout svg,
+html[data-theme="dark"] .photo-remove {
+  color: #e6a3a3;
+}
+
+html[data-theme="dark"] .account-dropdown-signout:hover {
+  background: #3a2525;
+  color: #e6a3a3;
+}
+
+html[data-theme="dark"] .dash-profile:hover {
+  background: #263b2e;
+}
+
+html[data-theme="dark"] .dash-profile .user-avatar {
+  border-color: #1a2420;
+}
+
+html[data-theme="dark"] .profile-photo-wrap .profile-photo {
+  border-color: #1a2420;
+  box-shadow: 0 0 0 1px var(--line), 0 16px 32px rgba(0, 0, 0, .3);
+}
+
+html[data-theme="dark"] .photo-camera {
+  border-color: #1a2420;
+}
+
+html[data-theme="dark"] .photo-dirty {
+  color: #e5c27b;
+}
+
 @media (max-width: 680px) {
   .home-pricing .section-heading {
     padding-inline: 17px;
