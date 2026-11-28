@@ -78,14 +78,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!sessionUserId) {
       setAccessToken(null);
-      setUser(null);
       return () => { active = false; };
     }
 
-    setAuthError(null);
     requestAccessToken()
       .then((profile) => {
-        if (active) setUser(profile);
+        if (active) {
+          setAuthError(null);
+          setUser(profile);
+        }
       })
       .catch((error: unknown) => {
         if (!active) return;
@@ -168,7 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
+        // Do not expose a cached API profile after the Better Auth session ends.
+        user: sessionUserId ? user : null,
         ready,
         authError,
         signIn,
