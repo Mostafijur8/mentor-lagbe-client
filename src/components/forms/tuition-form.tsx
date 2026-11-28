@@ -131,6 +131,7 @@ export function TuitionForm() {
             <input
               id="tuition-title"
               name="title"
+              
               required
               placeholder="e.g. Build strong foundations in algebra"
             />
