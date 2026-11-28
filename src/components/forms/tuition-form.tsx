@@ -132,8 +132,6 @@ export function TuitionForm() {
               id="tuition-title"
               name="title"
               required
-              minLength={8}
-              maxLength={90}
               placeholder="e.g. Build strong foundations in algebra"
             />
           </div>
@@ -207,8 +205,6 @@ export function TuitionForm() {
               id="tuition-description"
               name="description"
               required
-              minLength={30}
-              maxLength={1200}
               placeholder="Share your approach, what you’ll cover, and how you’ll help learners make progress…"
             />
           </div>
